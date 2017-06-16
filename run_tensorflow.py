@@ -100,7 +100,7 @@ x = tf.placeholder(tf.float32, [None, 1, 1])
 y = tf.placeholder(tf.float32, [None, classes])
 
 
-class CustomLSTMCell(tf.contrib.rnn.BasicLSTMCell):
+class CustomLSTMCell(tf.nn.rnn_cell.BasicLSTMCell):
 
     def __call__(self, inputs, state, scope=None):
         new_h, new_state = super().__call__(inputs, state, scope)
@@ -123,14 +123,14 @@ class CustomLSTMCell(tf.contrib.rnn.BasicLSTMCell):
 # XXX version A : vanilla LSTM cell + dropout wrapper
 #     available cells    : BasicRNNCell BasicLSTMCell GRUCell LSTMCell
 #                          CoupledInputForgetGateLSTMCell TimeFreqLSTMCell
-# layer = tf.contrib.rnn.BasicLSTMCell(cells_per_layer)
+# layer = tf.nn.rnn_cell.BasicLSTMCell(cells_per_layer)
 #     available wrappers : AttentionCellWrapper DropoutWrapper EmbeddingWrapper
-# layer = tf.contrib.rnn.DropoutWrapper(layer, output_keep_prob=keep_prob)
+# layer = tf.nn.rnn_cell.DropoutWrapper(layer, output_keep_prob=keep_prob)
 
 # XXX version B : custom LSTM cell, integrating prelu & dropout
 layers = [CustomLSTMCell(cells_per_layer) for _ in range(hidden_layers)]
 
-rnn = tf.contrib.rnn.MultiRNNCell(layers)
+rnn = tf.nn.rnn_cell.MultiRNNCell(layers)
 initial_state = rnn.zero_state(batch_size, tf.float32)
 yhat, state = tf.nn.dynamic_rnn(rnn, inputs=x, initial_state=initial_state)
 #                          # Prms | Loss        | Accuracy
