@@ -3,20 +3,19 @@
 import gc
 
 import numpy as np
+np.random.seed(42) # noqa
+
 import tensorflow as tf
+tf.set_random_seed(42) # noqa
 
 from random import shuffle
 from shutil import rmtree
 from math import floor
 
-# for reproducibility, must be set before importing keras
-np.random.seed(42) # noqa
-tf.set_random_seed(42) # noqa
-
 from keras import backend as K
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.layers import LSTM, PReLU, Dropout, Dense
+from keras.layers import GRU, PReLU, Dropout, Dense
 from keras.callbacks import LearningRateScheduler, TensorBoard
 
 # data set
@@ -40,6 +39,7 @@ y = to_categorical(y)
 
 # parameters
 epochs = 500
+dropout_prob = 0.1
 min_lr = 0.001  # default Adam learning rate
 max_lr = 0.01   # x10 = 96%
 step_lr = epochs / 10
@@ -62,20 +62,20 @@ class TensorBoardWithLR(TensorBoard):
 # model definition
 model = Sequential()
 
-model.add(LSTM(16, input_shape=(X.shape[1], X.shape[2]), implementation=2,
-               return_sequences=True))
+model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
+              implementation=2, return_sequences=True))
 model.add(PReLU())
-model.add(Dropout(0.1))
+model.add(Dropout(dropout_prob))
 
-model.add(LSTM(16, input_shape=(X.shape[1], X.shape[2]), implementation=2,
-               return_sequences=True))
+model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
+              implementation=2, return_sequences=True))
 model.add(PReLU())
-model.add(Dropout(0.1))
+model.add(Dropout(dropout_prob))
 
-model.add(LSTM(16, input_shape=(X.shape[1], X.shape[2]), implementation=2,
-               return_sequences=False))
+model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
+              implementation=2, return_sequences=False))
 model.add(PReLU())
-model.add(Dropout(0.1))
+model.add(Dropout(dropout_prob))
 
 model.add(Dense(y.shape[1], activation='softmax'))
 model.compile(loss='categorical_crossentropy',
