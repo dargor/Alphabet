@@ -94,6 +94,7 @@ hidden_layers = 3
 cells_per_layer = 16
 keep_cell_prob = 0.9
 assert 0 < keep_cell_prob <= 1
+l2_reg = 1e-4
 
 epochs = 500
 batch_size = 1
@@ -105,68 +106,37 @@ max_lr = 0.01   # x10 = 96%
 step_lr = epochs / 10
 scale_lr = True
 
+training = tf.placeholder_with_default(False, [])
+keep_prob = tf.where(training, keep_cell_prob, 1)
+
 lr = tf.placeholder(tf.float32)
-keep_prob = tf.placeholder(tf.float32)
 x = tf.placeholder(tf.float32, [None, 1, 1])
 y = tf.placeholder(tf.float32, [None, classes])
 
-
-#                                     # Prms | Loss        | Accuracy
-# tf.nn.rnn_cell.BasicRNNCell         # 1834 | 0.840756910 | 0.920000000
-# tf.nn.rnn_cell.GRUCell              # 4522 | 0.645110278 | 1.000000000
-# tf.nn.rnn_cell.BasicLSTMCell        # 5866 | 0.737078576 | 1.000000000
-# tf.nn.rnn_cell.LSTMCell             # 5866 | 0.737078576 | 1.000000000
-# tf.nn.rnn_cell.LSTMCell + peepholes # 6010 | 0.745531615 | 0.920000000
-class CustomRNNCell(tf.nn.rnn_cell.GRUCell):
-
-    def __call__(self, inputs, state, scope=None):
-        new_h, new_state = super().__call__(inputs, state, scope)
-        #                            # Prms | Loss        | Accuracy
-        # None                       # 5818 | 0.765377985 | 0.920000000
-        # new_h = tf.nn.relu(new_h)  # 5818 | 1.631359415 | 0.560000000
-        # new_h = tf.nn.elu(new_h)   # 5818 | 0.810860920 | 0.880000000
-        # new_h = relu(new_h)        # 5818 | 1.805080099 | 0.520000000
-        # new_h = lrelu(new_h, 0.01) # 5818 | 1.375006690 | 0.680000000
-        # new_h = lrelu(new_h, 0.2)  # 5818 | 0.968093691 | 0.880000000
-        new_h = prelu(new_h)         # 5866 | 0.737078576 | 1.000000000
-        # new_h = prelu2(new_h)      # 5821 | 0.752888067 | 0.960000000
-        # new_h = elu(new_h)         # 5818 | 0.821999593 | 0.800000000
-        # new_h = pelu(new_h)        # 5866 | 0.710354111 | 0.960000000
-        # new_h = pelu2(new_h)       # 5821 | 0.601579508 | 0.920000000
-        # new_h = selu(new_h)        # 5818 | 0.780245475 | 0.880000000
-        new_h = tf.nn.dropout(new_h, keep_prob)
-        return new_h, new_state
-
-
-layers = [CustomRNNCell(cells_per_layer) for _ in range(hidden_layers)]
+layers = [tf.nn.rnn_cell.GRUCell(cells_per_layer, activation=tf.nn.elu)
+          for _ in range(hidden_layers)]
+layers = [tf.nn.rnn_cell.DropoutWrapper(layer, output_keep_prob=keep_prob)
+          for layer in layers]
 rnn = tf.nn.rnn_cell.MultiRNNCell(layers)
 initial_state = rnn.zero_state(batch_size, tf.float32)
 yhat, _ = tf.nn.dynamic_rnn(rnn, inputs=x, initial_state=initial_state)
 yhat = tf.layers.dense(yhat, classes)
 yhat = tf.reshape(yhat, [batch_size, -1])
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+l2_loss = []
+for v in tf.trainable_variables():
+    if '/kernel:' in v.name:
+        print('[92m+ {}[0m'.format(v.name))
+        l2_loss.append(tf.nn.l2_loss(v))
+    else:
+        print('[90m  {}[0m'.format(v.name))
+l2_loss = tf.add_n(l2_loss) * l2_reg
+
+loss = l2_loss + tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
     logits=yhat,
     labels=y,
 ))
-# XXX non adaptive optimizers
-# optimizer = tf.train.GradientDescentOptimizer(lr)
-# optimizer = tf.train.MomentumOptimizer(lr, momentum=0.9, use_nesterov=False)
-# optimizer = tf.train.MomentumOptimizer(lr, momentum=0.9, use_nesterov=True)
-# XXX adaptive optimizers
-# optimizer = tf.train.AdadeltaOptimizer(lr)
-# optimizer = tf.train.AdagradOptimizer(lr)
-# optimizer = tf.train.RMSPropOptimizer(lr)
-optimizer = tf.train.AdamOptimizer(lr)
-# Optimizer | Loss        | Accuracy
-# SGD       | 3.235350876 | 0.040000000
-# Momentum  | 3.221479120 | 0.040000000
-# NAG       | 3.221476517 | 0.040000000
-# Adadelta  | 3.256221209 | 0.080000000
-# Adagrad   | 3.240393400 | 0.040000000
-# RMSProp   | 1.111033341 | 0.680000000
-# Adam      | 0.737078576 | 1.000000000
-train = optimizer.minimize(loss)
+train = tf.train.AdamOptimizer(lr).minimize(loss)
 
 correct_predictions = tf.equal(tf.argmax(yhat, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
@@ -186,7 +156,7 @@ test_ops = [merged_test]
 saver = tf.train.Saver()
 for v in [loss, accuracy, y]:
     tf.add_to_collection('evaluations', v)
-for v in [yhat, x, keep_prob]:
+for v in [yhat, x]:
     tf.add_to_collection('predictions', v)
 
 init = tf.global_variables_initializer()
@@ -213,7 +183,7 @@ with tf.Session() as sess:
             _, l, a, m = sess.run(train_ops, {
                 x: [x_train[n]],
                 y: [y_train[n]],
-                keep_prob: keep_cell_prob,
+                training: True,
                 lr: _lr,
             })
             avg_loss += l
@@ -230,7 +200,6 @@ with tf.Session() as sess:
             m, = sess.run(test_ops, {
                 x: [x_train[n]],
                 y: [y_train[n]],
-                keep_prob: 1,
             })
             test_writer.add_summary(m, j)
             j += 1
@@ -245,7 +214,6 @@ with tf.Session() as sess:
         l, a = sess.run([loss, accuracy], {
             x: [x_train[n]],
             y: [y_train[n]],
-            keep_prob: 1,
         })
         avg_loss += l
         avg_accuracy += a
@@ -266,7 +234,6 @@ with tf.Session() as sess:
         # feed prepared input data to the model
         pred_y = yhat.eval({
             x: [_x],
-            keep_prob: 1,
         })
         # convert output back to something lisible
         real_y = int_to_char[np.argmax(pred_y)]

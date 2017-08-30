@@ -15,8 +15,9 @@ from math import floor
 from keras import backend as K
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.layers import GRU, PReLU, Dropout, Dense
+from keras.layers import GRU, ELU, Dropout, Dense
 from keras.callbacks import LearningRateScheduler, TensorBoard
+from keras.regularizers import l2
 
 # data set
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -39,6 +40,7 @@ y = to_categorical(y)
 
 # parameters
 epochs = 500
+l2_reg = 1e-4
 dropout_prob = 0.1
 min_lr = 0.001  # default Adam learning rate
 max_lr = 0.01   # x10 = 96%
@@ -63,21 +65,25 @@ class TensorBoardWithLR(TensorBoard):
 model = Sequential()
 
 model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
-              implementation=2, return_sequences=True))
-model.add(PReLU())
+              implementation=2, return_sequences=True,
+              kernel_regularizer=l2(l2_reg)))
+model.add(ELU())
 model.add(Dropout(dropout_prob))
 
 model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
-              implementation=2, return_sequences=True))
-model.add(PReLU())
+              implementation=2, return_sequences=True,
+              kernel_regularizer=l2(l2_reg)))
+model.add(ELU())
 model.add(Dropout(dropout_prob))
 
 model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
-              implementation=2, return_sequences=False))
-model.add(PReLU())
+              implementation=2, return_sequences=False,
+              kernel_regularizer=l2(l2_reg)))
+model.add(ELU())
 model.add(Dropout(dropout_prob))
 
-model.add(Dense(y.shape[1], activation='softmax'))
+model.add(Dense(y.shape[1], activation='softmax',
+                kernel_regularizer=l2(l2_reg)))
 model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])

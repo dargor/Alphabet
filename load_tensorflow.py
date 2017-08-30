@@ -36,7 +36,7 @@ saver = tf.train.import_meta_graph('{}.meta'.format(latest_checkpoint))
 with tf.Session() as sess:
     saver.restore(sess, latest_checkpoint)
     loss, accuracy, y = tf.get_collection('evaluations')
-    yhat, x, keep_prob = tf.get_collection('predictions')
+    yhat, x = tf.get_collection('predictions')
 
     # evaluation
     avg_loss = 0
@@ -45,7 +45,6 @@ with tf.Session() as sess:
         l, a = sess.run([loss, accuracy], {
             x: [x_train[n]],
             y: [y_train[n]],
-            keep_prob: 1,
         })
         avg_loss += l
         avg_accuracy += a
@@ -64,7 +63,6 @@ with tf.Session() as sess:
         # feed prepared input data to the model
         pred_y = yhat.eval({
             x: [_x],
-            keep_prob: 1,
         })
         # convert output back to something lisible
         real_y = int_to_char[np.argmax(pred_y)]
