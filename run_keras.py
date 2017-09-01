@@ -108,6 +108,9 @@ model.fit(X, y,
           ],
           verbose=2)
 
+# model saving
+model.save('keras.h5')
+
 # model summary
 model.summary()
 
