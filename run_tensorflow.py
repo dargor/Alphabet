@@ -77,6 +77,12 @@ def selu(x, name='selu'):
         return scale * tf.where(x >= 0, x, alpha * tf.nn.elu(x))
 
 
+def swish(x, name='swish'):
+    # https://arxiv.org/abs/1710.05941
+    with tf.variable_scope(name):
+        return x * tf.nn.sigmoid(x)
+
+
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 classes = len(alphabet)
 
