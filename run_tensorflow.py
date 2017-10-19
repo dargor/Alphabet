@@ -152,8 +152,15 @@ summary_lr = tf.summary.scalar('LR', lr)
 summary_loss = tf.summary.scalar('Loss', loss)
 summary_accuracy = tf.summary.scalar('Accuracy', accuracy)
 
-merged_train = tf.summary.merge([summary_lr, summary_loss, summary_accuracy])
-merged_test = tf.summary.merge([summary_loss, summary_accuracy])
+trainables = []
+for v in tf.trainable_variables():
+    trainables.append(tf.summary.histogram(v.name, v))
+
+train_summaries = [summary_lr, summary_loss, summary_accuracy] + trainables
+test_summaries = [summary_loss, summary_accuracy] + trainables
+
+merged_train = tf.summary.merge(train_summaries)
+merged_test = tf.summary.merge(test_summaries)
 
 train_ops = [train, loss, accuracy, merged_train]
 test_ops = [merged_test]
