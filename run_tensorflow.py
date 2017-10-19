@@ -152,9 +152,8 @@ summary_lr = tf.summary.scalar('LR', lr)
 summary_loss = tf.summary.scalar('Loss', loss)
 summary_accuracy = tf.summary.scalar('Accuracy', accuracy)
 
-trainables = []
-for v in tf.trainable_variables():
-    trainables.append(tf.summary.histogram(v.name, v))
+trainables = [tf.summary.histogram(v.name, v)
+              for v in tf.trainable_variables()]
 
 train_summaries = [summary_lr, summary_loss, summary_accuracy] + trainables
 test_summaries = [summary_loss, summary_accuracy] + trainables
