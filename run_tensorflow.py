@@ -235,7 +235,7 @@ with tf.Session() as sess:
     print('Model accuracy: {:.9f}'.format(avg_accuracy))
     print('Model parameters: {}'.format(model_parameters()))
 
-    saver.save(sess, 'model')
+    saver.save(sess, './model')
 
     # predictions
     l = list(alphabet[:25])
