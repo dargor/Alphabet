@@ -21,6 +21,7 @@ from keras.regularizers import l2
 
 # data set
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+classes = len(alphabet)
 
 # letter<->integer encoding
 char_to_int = {c: i for i, c in enumerate(alphabet)}
@@ -31,7 +32,7 @@ X = [char_to_int[c] for c in alphabet[:25]]
 # reshape to (samples, time steps, features)
 X = np.reshape(X, (len(X), 1, 1))
 # normalize
-X = X / len(alphabet)
+X = X / classes
 
 # encode targets
 y = [char_to_int[c] for c in alphabet[1:]]
@@ -82,7 +83,7 @@ model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
 model.add(ELU())
 model.add(Dropout(dropout_prob))
 
-model.add(Dense(y.shape[1], activation='softmax',
+model.add(Dense(classes, activation='softmax',
                 kernel_regularizer=l2(l2_reg)))
 model.compile(loss='categorical_crossentropy',
               optimizer='adam',
@@ -123,7 +124,7 @@ l = list(alphabet[:25])
 shuffle(l)
 for a in l:
     # prepare input data
-    x = np.reshape([char_to_int[a]], (1, 1, 1)) / len(alphabet)
+    x = np.reshape([char_to_int[a]], (1, 1, 1)) / classes
     # feed prepared input data to the model
     pred_y = model.predict(x, verbose=0)
     # convert output back to something lisible
