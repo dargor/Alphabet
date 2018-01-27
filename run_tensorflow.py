@@ -138,9 +138,9 @@ for v in tf.trainable_variables():
         print('[90m  {}[0m'.format(v.name))
 l2_loss = tf.add_n(l2_loss) * l2_reg
 
-loss = l2_loss + tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+loss = l2_loss + tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(
     logits=yhat,
-    labels=y,
+    labels=tf.stop_gradient(y),
 ))
 train = tf.train.AdamOptimizer(lr).minimize(loss)
 
