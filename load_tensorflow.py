@@ -20,7 +20,7 @@ char_to_int = {c: i for i, c in enumerate(alphabet)}
 int_to_char = {i: c for c, i in char_to_int.items()}
 
 x_train = [char_to_int[c] for c in alphabet[:25]]
-x_train = np.reshape(x_train, [len(x_train), 1, 1])
+x_train = np.reshape(x_train, [-1, 1, 1])
 x_train = x_train / classes
 
 y_train = [char_to_int[c] for c in alphabet[1:]]

@@ -30,7 +30,7 @@ int_to_char = {i: c for c, i in char_to_int.items()}
 # encode inputs
 X = [char_to_int[c] for c in alphabet[:25]]
 # reshape to (samples, time steps, features)
-X = np.reshape(X, (len(X), 1, 1))
+X = np.reshape(X, (-1, 1, 1))
 # normalize
 X = X / classes
 
@@ -43,6 +43,9 @@ y = to_categorical(y)
 epochs = 500
 l2_reg = 1e-4
 dropout_prob = 0.1
+cells_per_layer = 16
+
+# learning rate tuning
 min_lr = 0.001  # default Adam learning rate
 max_lr = 0.01   # x10 = 96%
 step_lr = epochs / 10
@@ -65,26 +68,24 @@ class TensorBoardWithLR(TensorBoard):
 # model definition
 model = Sequential()
 
-model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
-              implementation=2, return_sequences=True,
-              kernel_regularizer=l2(l2_reg)))
+model.add(GRU(cells_per_layer, input_shape=(X.shape[1], X.shape[2]),
+              return_sequences=True, kernel_regularizer=l2(l2_reg)))
 model.add(ELU())
 model.add(Dropout(dropout_prob))
 
-model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
-              implementation=2, return_sequences=True,
-              kernel_regularizer=l2(l2_reg)))
+model.add(GRU(cells_per_layer, input_shape=(X.shape[1], X.shape[2]),
+              return_sequences=True, kernel_regularizer=l2(l2_reg)))
 model.add(ELU())
 model.add(Dropout(dropout_prob))
 
-model.add(GRU(16, input_shape=(X.shape[1], X.shape[2]),
-              implementation=2, return_sequences=False,
-              kernel_regularizer=l2(l2_reg)))
+model.add(GRU(cells_per_layer, input_shape=(X.shape[1], X.shape[2]),
+              return_sequences=False, kernel_regularizer=l2(l2_reg)))
 model.add(ELU())
 model.add(Dropout(dropout_prob))
 
 model.add(Dense(classes, activation='softmax',
                 kernel_regularizer=l2(l2_reg)))
+
 model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])

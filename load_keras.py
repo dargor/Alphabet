@@ -19,7 +19,7 @@ int_to_char = {i: c for c, i in char_to_int.items()}
 # encode inputs
 X = [char_to_int[c] for c in alphabet[:25]]
 # reshape to (samples, time steps, features)
-X = np.reshape(X, (len(X), 1, 1))
+X = np.reshape(X, (-1, 1, 1))
 # normalize
 X = X / classes
 
