@@ -77,6 +77,12 @@ def selu(x, name='selu'):
         return scale * tf.where(x >= 0, x, alpha * tf.nn.elu(x))
 
 
+def gelu(x, name='gelu'):
+    # https://arxiv.org/abs/1606.08415
+    with tf.variable_scope(name):
+        return .5 * x * (1 + tf.tanh(tf.sqrt(2 / np.pi) * (x + .044715 * tf.pow(x, 3)))) # noqa
+
+
 def swish(x, name='swish'):
     # https://arxiv.org/abs/1710.05941
     with tf.variable_scope(name):
