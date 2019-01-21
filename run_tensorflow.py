@@ -80,7 +80,7 @@ def selu(x, name='selu'):
 def gelu(x, name='gelu'):
     # https://arxiv.org/abs/1606.08415
     with tf.variable_scope(name):
-        return .5 * x * (1 + tf.tanh(tf.sqrt(2 / np.pi) * (x + .044715 * tf.pow(x, 3)))) # noqa
+        return .5 * x * (1 + tf.tanh(np.sqrt(2 / np.pi) * (x + .044715 * tf.pow(x, 3)))) # noqa
 
 
 def swish(x, name='swish'):
