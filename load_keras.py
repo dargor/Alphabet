@@ -1,12 +1,11 @@
 #! /usr/bin/env python3
 
-import gc
 import numpy as np
 from random import shuffle
 
-from keras import backend as K
 from keras.utils import to_categorical
 from keras.models import load_model
+
 
 # data set
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -48,9 +47,3 @@ for a in l:
     # check if output match our expectations
     expected = chr(ord(a) + 1)
     print('{} -> {} {}'.format(a, real_y, '' if real_y == expected else '*'))
-
-
-# https://github.com/tensorflow/tensorflow/issues/3388#issuecomment-271107725
-K.clear_session()
-# https://github.com/tensorflow/tensorflow/issues/3388#issuecomment-268502675
-gc.collect()

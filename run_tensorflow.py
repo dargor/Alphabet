@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 
+import random as rn
+rn.seed(42) # noqa
+
 import numpy as np
 np.random.seed(42) # noqa
 

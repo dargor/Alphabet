@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
-import gc
+import random as rn
+rn.seed(42) # noqa
 
 import numpy as np
 np.random.seed(42) # noqa
@@ -18,6 +19,7 @@ from keras.models import Sequential
 from keras.layers import GRU, ELU, Dropout, Dense
 from keras.callbacks import LearningRateScheduler, TensorBoard
 from keras.regularizers import l2
+
 
 # data set
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -134,10 +136,5 @@ for a in l:
     expected = chr(ord(a) + 1)
     print('{} -> {} {}'.format(a, real_y, '' if real_y == expected else '*'))
 
-
-# https://github.com/tensorflow/tensorflow/issues/3388#issuecomment-271107725
-K.clear_session()
-# https://github.com/tensorflow/tensorflow/issues/3388#issuecomment-268502675
-gc.collect()
 
 print('tensorboard --logdir=/tmp/tflogs/')
