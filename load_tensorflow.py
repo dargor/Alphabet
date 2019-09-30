@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+# XXX kept only for its pre-2.x historic interest and flavor
+
 import numpy as np
 import tensorflow as tf
 

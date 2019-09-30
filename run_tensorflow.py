@@ -1,13 +1,9 @@
 #! /usr/bin/env python3
 
-import random as rn
-rn.seed(42) # noqa
+# XXX kept only for its pre-2.x historic interest and flavor
 
 import numpy as np
-np.random.seed(42) # noqa
-
 import tensorflow as tf
-tf.set_random_seed(42) # noqa
 
 from functools import reduce
 from random import shuffle
